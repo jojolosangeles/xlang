@@ -1,5 +1,4 @@
 
-
 #
 #  dimension(d) => dim=1
 #    if not d[0].isalpha():
@@ -112,7 +111,7 @@ def as_number(s):
 #        shape_str = f"({n},)"
 #
 def as_shape(input_spec):
-    shape_str = input_spec
+    shape_str = f"({input_spec},)"
     data = input_spec.split()
     for d in data:
         if dimension(d) > 1:
@@ -160,69 +159,6 @@ def as_output_layer_params(output_spec):
     return as_layer_class(layer_type, implicit_dimension(param_values)), param_values, attrs
 
 
-param_indices = {
-    "conv": [1, 2],
-    "dense": [1],
-    "dropout": [1],
-    "flatten": [],
-    "maxpool": [1]
-}
-
-remembered_param_values = {
-    "conv": [],
-    "dense": [],
-    "dropout": [],
-    "flatten": [],
-    "maxpool": []
-}
-
-attr_indices = {
-    "conv": [3],
-    "dense": [2],
-    "dropout": [],
-    "flatten": [],
-    "maxpool": []
-}
-
-remembered_attr_values = {
-    "conv": [],
-    "dense": [],
-    "dropout": [],
-    "flatten": [],
-    "maxpool": []
-}
-
-
-def memory(remembered_values, layer_type, tokens, indices):
-    specified_values = [tokens[i] for i in indices if i < len(tokens)]
-    if len(remembered_values) > len(specified_values):
-        specified_values.extend(remembered_values[len(specified_values):])
-    return specified_values
-
-
-def param_memory(layer_type, tokens, indices):
-    remembered_param_values[layer_type] = memory(remembered_param_values[layer_type], layer_type, tokens, indices)
-    return remembered_param_values[layer_type]
-
-
-def attr_memory(layer_type, tokens, indices):
-    remembered_attr_values[layer_type] = memory(remembered_attr_values[layer_type], layer_type, tokens, indices)
-    return remembered_attr_values[layer_type]
-
-
-#
-#  get_params(layer_type, tokens) => params, attrs
-#    indices = param_indices[layer_type]
-#    params,attrs = memory(layer_type, tokens, indices)
-#
-def get_params(layer_type, tokens):
-    pindices = param_indices[layer_type]
-    params = param_memory(layer_type, tokens, pindices)
-    aindices = attr_indices[layer_type]
-    attrs = attr_memory(layer_type, tokens, aindices)
-    return params,attrs
-
-
 attr_name = {
     "relu": "activation",
     "selu": "activation",
@@ -238,4 +174,4 @@ attr_name = {
 #
 def as_kwparam_list(attrs):
     for attr in attrs:
-        yield attr_name[attr],attr
+        yield attr_name[attr], attr

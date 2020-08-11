@@ -3,6 +3,41 @@ from keras import layers
 
 
 #
+# 28*28 => mnist_p53 => 10 probabilities
+# - dense 512 relu
+#
+def model_mnist_p53():
+    model = models.Sequential()
+    model.add(layers.Dense(512, activation='relu', input_shape=(28*28,)))
+    model.add(layers.Dense(10, activation='softmax'))
+    return model
+
+
+#
+# 784 => mnist_p63 => 10 probabilities
+# - dense 32 relu
+#
+def model_mnist_p63():
+    model = models.Sequential()
+    model.add(layers.Dense(32, activation='relu', input_shape=(784,)))
+    model.add(layers.Dense(10, activation='softmax'))
+    return model
+
+
+#
+# text 10k => imdb_p72 => probability
+# - dense 16 relu
+# - dense
+#
+def model_imdb_p72():
+    model = models.Sequential()
+    model.add(layers.Dense(16, activation='relu', input_shape=(10000,)))
+    model.add(layers.Dense(16, activation='relu'))
+    model.add(layers.Dense(1, activation='sigmoid'))
+    return model
+
+
+#
 # text 10k => reuters_p80 => 46 probabilities
 # - dense 64 relu
 # - dense

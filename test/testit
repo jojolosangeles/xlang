@@ -1,4 +1,4 @@
 set -x
-mkdir -p results
-python regen.py > results/x.py
-diff xlang_p80.py results/x.py
+mkdir -p generated
+python regen.py ddlp.py > generated/ddlp.py
+diff ddlp.py generated/ddlp.py

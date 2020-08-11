@@ -1,7 +1,8 @@
 from xlate.xperiment import Xperiment
 from xlate import xlate
+import sys
 
-fileName = "xlang_p80.py"
+fileName = sys.argv[1]
 lines = open(fileName, "r").readlines()
 
 
@@ -28,8 +29,8 @@ class Xbuilder:
                 line = line[2:]
                 data = line.split()
                 layer_type = data[0]
-                params,attrs = xlate.get_params(layer_type, data)
-                self.xcurrent.add_layer(layer_type, params, attrs)
+                class_name,params,attrs = self.xcurrent.layer_memory.get_params(layer_type, data)
+                self.xcurrent.add_layer(class_name, params, attrs)
 
     def parse(self, line):
         data = line.split("=>")
