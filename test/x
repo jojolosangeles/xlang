@@ -1,0 +1,79 @@
+0a1,74
+> as_kwparam(input_shape,(10000,))
+> after as_param, val=(10000,)
+> after maybe_quote, val=(10000,)
+> input_shape=(10000,)
+> ['46', 'probabilities']
+> class_selector is probabilities
+> lookup values:  dense ['Token_0'] ['softmax']
+> param values:  ['46']
+> name: activation, val: softmax
+> as_kwparam(activation,softmax)
+> after as_param, val=softmax
+> after maybe_quote, val='softmax'
+> activation='softmax'
+> attr values:  ["activation='softmax'"]
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(input_shape,(10000,))
+> after as_param, val=(10000,)
+> after maybe_quote, val=(10000,)
+> input_shape=(10000,)
+> ['probability']
+> class_selector is probability
+> lookup values:  dense ['1'] ['sigmoid']
+> param values:  []
+> name: activation, val: sigmoid
+> as_kwparam(activation,sigmoid)
+> after as_param, val=sigmoid
+> after maybe_quote, val='sigmoid'
+> activation='sigmoid'
+> attr values:  ["activation='sigmoid'"]
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(input_shape,(28,28,1))
+> after as_param, val=(28,28,1)
+> after maybe_quote, val=(28,28,1)
+> input_shape=(28,28,1)
+> ['10', 'probabilities']
+> class_selector is probabilities
+> lookup values:  dense ['Token_0'] ['softmax']
+> param values:  ['10']
+> name: activation, val: softmax
+> as_kwparam(activation,softmax)
+> after as_param, val=softmax
+> after maybe_quote, val='softmax'
+> activation='softmax'
+> attr values:  ["activation='softmax'"]
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+> as_kwparam(activation,relu)
+> after as_param, val=relu
+> after maybe_quote, val='relu'
+> activation='relu'
+31c105
+<     model.add(layers.Dense(1, activation='sigmoid'))
+---
+>     model.add(layers.Dense(activation='sigmoid'))
