@@ -16,10 +16,23 @@ def dimension(d):
 #    for p in param_values:
 #      dim = max(dim, dimension(p))
 #
+last_explicit_dimension = 1
+
+
+def reset_dimensions():
+    global last_explicit_dimension
+    last_explicit_dimension = 1
+
+
 def implicit_dimension(param_values):
+    global last_explicit_dimension
     dim = 1
     for p in param_values:
         dim = max(dim, dimension(p))
+    if dim > 1:
+        last_explicit_dimension = dim
+    if len(param_values) == 0:
+        dim = last_explicit_dimension
     return dim
 
 
@@ -29,7 +42,7 @@ def implicit_dimension(param_values):
 #      val = f"'{val}'"
 #
 def maybe_quote(val):
-    if val[0].isalpha():
+    if val[0].isalpha() and not '(' in val and val != "True" and val != "False":
         val = f"'{val}'"
     return val
 
@@ -43,6 +56,10 @@ def as_param(p):
     if dimension(p) > 1:
         p = f"({p.replace('x', ',')})"
     return p
+
+
+def params_as_code(param_values):
+    return [as_param(val) for val in param_values]
 
 
 #
@@ -59,14 +76,6 @@ def as_kwparam(name, val):
 
 
 # Map layer type-s into class names
-layer_type_class = {
-    "conv": "Conv",
-    "dense": "Dense",
-    "dropout": "Dropout",
-    "flatten": "Flatten",
-    "maxpool": "MaxPooling"
-}
-
 dimensional_layers = [ "conv", "maxpool" ]
 
 
@@ -76,10 +85,11 @@ dimensional_layers = [ "conv", "maxpool" ]
 #    if layer_type in dimensional_layers:
 #      class_name = f"{class_name}{dimensionality}D"
 #
-def as_layer_class(layer_type, dimensionality):
-    class_name = layer_type_class[layer_type]
-    if layer_type in dimensional_layers:
+def as_layer_class(class_name, is_dimensional, dimensionality, tokens=[]):
+    if is_dimensional:
         class_name = f"{class_name}{dimensionality}D"
+    if class_name.startswith("Token_"):
+        class_name = tokens[int(class_name[6:])]
     return class_name
 
 
@@ -111,14 +121,19 @@ def as_number(s):
 #        shape_str = f"({n},)"
 #
 def as_shape(input_spec):
+    if input_spec == "features":
+        input_spec = "n_features"
     shape_str = f"({input_spec},)"
     data = input_spec.split()
-    for d in data:
-        if dimension(d) > 1:
-            shape_str = f"({d.replace('x', ',')})"
-        n = as_number(d)
-        if n > 0:
-            shape_str = f"({n},)"
+    if data[0] == 'time':
+        shape_str = f"(None,{data[1]})"
+    else:
+        for d in data:
+            if dimension(d) > 1:
+                shape_str = f"({d.replace('x', ',')})"
+            n = as_number(d)
+            if n > 0:
+                shape_str = f"({n},)"
     return shape_str
 
 
@@ -140,31 +155,27 @@ class_selectors = {
 }
 
 
-#
-#  as_output_layer_params(output_spec) => class_name,param_values,attrs
-#    tokens = output_spec.split()
-#    for t in tokens:
-#      if t in class_selectors:
-#        layer_type, params, attrs = class_selectors[t]
-#        param_values = [ token_val(t, tokens) for t in tokens ]
-#
-def as_output_layer_params(output_spec):
-    layer_type, param_values, attrs = None, None, None
-    tokens = output_spec.split()
-    for t in tokens:
-        if t in class_selectors:
-            layer_type, params, attrs = class_selectors[t]
-            param_values = [token_val(t, tokens) for t in params]
-            attrs = [as_kwparam(name, val) for name, val in as_kwparam_list(attrs)]
-    return as_layer_class(layer_type, implicit_dimension(param_values)), param_values, attrs
 
 
-attr_name = {
-    "relu": "activation",
-    "selu": "activation",
-    "sigmoid": "activation",
-    "softmax": "activation"
+
+attr_values = {
+    "activation": { "relu", "selu", "sigmoid", "softmax" },
+    "kernel_regularizer": { "l1", "l2" },
+    "weights": { "imagenet" }
 }
+
+
+def attr_name(val):
+    for attr_name in attr_values:
+        if val in attr_values[attr_name]:
+            return attr_name
+    return ""
+
+
+def attr_val(val, possible_params):
+    if val == "l2":
+        return f"regularizers.l2({possible_params[0]})"
+    return val
 
 
 #
@@ -173,5 +184,11 @@ attr_name = {
 #      yield attr_name[attr],attr
 #
 def as_kwparam_list(attrs):
-    for attr in attrs:
-        yield attr_name[attr], attr
+    for i,attr in enumerate(attrs):
+        name = attr_name(attr)
+        val = attr_val(attr, attrs[(i+1):])
+        if name:
+            yield name, val
+        elif '=' in attr:
+            data = attr.split('=')
+            yield data[0], data[1]

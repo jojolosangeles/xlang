@@ -5,15 +5,26 @@ from keras.applications import VGG16
 
 
 #
-# 150x150x3 => catdog_p150 => probability
-# - convbase VGG16 imagenet
-# - flatten
-# - dense 256 relu
+# 64x64x3 => image_p262 => 10 probabilities
+# with conv=separableconv
+# - conv 32 3x3 relu
+# - conv 64
+# - conv 128
+# - maxpool 2x2
+# - conv 64
+# - conv 128
+# - global_average_pool
+# - dense 32 relu
 #
-def model_catdog_p150():
+def model_image_p262():
     model = models.Sequential()
-    model.add(VGG16(weights='imagenet', include_top=False, input_shape=(150,150,3)))
-    model.add(layers.Flatten())
-    model.add(layers.Dense(256, activation='relu'))
-    model.add(layers.Dense(1, activation='sigmoid'))
+    model.add(layers.SeparableConv2D(32, (3,3), activation='relu', input_shape=(64,64,3)))
+    model.add(layers.SeparableConv2D(64, (3,3), activation='relu'))
+    model.add(layers.SeparableConv2D(128, (3,3), activation='relu'))
+    model.add(layers.MaxPooling2D((2,2)))
+    model.add(layers.SeparableConv2D(64, (3,3), activation='relu'))
+    model.add(layers.SeparableConv2D(128, (3,3), activation='relu'))
+    model.add(layers.GlobalAveragePooling1D())
+    model.add(layers.Dense(32, activation='relu'))
+    model.add(layers.Dense(10, activation='softmax'))
     return model

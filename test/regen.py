@@ -10,11 +10,12 @@ class Xbuilder:
     def __init__(self):
         self.xperiments = []
         self.xcurrent = None
+        self.layer_type_replacements = {}
 
     def process_line(self, line):
         if len(line) > 2 and line[0] == '#':
             line = line[2:]
-            is_header, is_layer = self.parse(line)
+            is_header, is_layer, is_with = self.parse(line)
 
             if is_header:
                 data = line.split("=>")
@@ -22,19 +23,32 @@ class Xbuilder:
                 self.xcurrent = Xperiment(data[1], data[0], data[2])
                 self.xperiments.append(self.xcurrent)
 
-            if is_header or is_layer:
+            if is_with:
+                data = line.split()
+                data = data[1].split("=")
+                self.layer_type_replacements[data[0]] = data[1]
+
+            if is_header or is_layer or is_with:
                 self.xcurrent.lines.append(line)
 
             if is_layer:
                 line = line[2:]
                 data = line.split()
                 layer_type = data[0]
+                if layer_type in self.layer_type_replacements:
+                    layer_type = self.layer_type_replacements[layer_type]
                 class_name,params,attrs = self.xcurrent.layer_memory.get_params(layer_type, data)
-                self.xcurrent.add_layer(xlate.token_val(class_name, data), params, attrs)
+                layer = self.xcurrent.add_layer(xlate.token_val(class_name, data), params, attrs)
+                if layer_type == "bidirectional":
+                    data = data[1:]
+                    layer_type = data[0]
+                    class_name, params, attrs = self.xcurrent.layer_memory.get_params(layer_type, data)
+                    param_str = ", ".join(xlate.params_as_code(params))
+                    layer.params.append(f"{class_name}({param_str})")
 
     def parse(self, line):
         data = line.split("=>")
-        return len(data) == 3, line.startswith("- ")
+        return len(data) == 3, line.startswith("- "), line.startswith("with ")
 
     def gen_code(self):
         print("from keras import models")
