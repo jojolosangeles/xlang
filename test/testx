@@ -1,0 +1,4 @@
+set -x
+mkdir -p generated
+python regen.py x.py > generated/x.py
+diff x.py generated/x.py

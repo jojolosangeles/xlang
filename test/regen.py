@@ -30,7 +30,7 @@ class Xbuilder:
                 data = line.split()
                 layer_type = data[0]
                 class_name,params,attrs = self.xcurrent.layer_memory.get_params(layer_type, data)
-                self.xcurrent.add_layer(class_name, params, attrs)
+                self.xcurrent.add_layer(xlate.token_val(class_name, data), params, attrs)
 
     def parse(self, line):
         data = line.split("=>")
@@ -39,6 +39,8 @@ class Xbuilder:
     def gen_code(self):
         print("from keras import models")
         print("from keras import layers")
+        print("from keras import regularizers")
+        print("from keras.applications import VGG16")
         for x in self.xperiments:
             x.prepare_to_code()
             print("")
@@ -47,11 +49,11 @@ class Xbuilder:
             for line in x.lines:
                 print(f"# {line}")
             print("#")
-            print(f"def model_{x.model_name}():")
+            print(f"def model_{x.model_name}({x.model_builder_params()}):")
             print("    model = models.Sequential()")
             for layer in x.layers:
                 params = ", ".join(layer.params + layer.kwparams)
-                print(f"    model.add(layers.{layer.class_name}({params}))")
+                print(f"    model.add({layer.class_name}({params}))")
             print("    return model")
 
 
