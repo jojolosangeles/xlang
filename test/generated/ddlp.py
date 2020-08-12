@@ -471,3 +471,14 @@ def model_image_p262():
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(10, activation='softmax'))
     return model
+
+
+#
+# 60x26 => nietz_p275 => 26 probabilities
+# - LSTM 128
+#
+def model_nietz_p275():
+    model = models.Sequential()
+    model.add(layers.LSTM(128, input_shape=(60,26)))
+    model.add(layers.Dense(26, activation='softmax'))
+    return model
