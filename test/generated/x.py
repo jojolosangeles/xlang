@@ -24,7 +24,7 @@ def model_image_p262():
     model.add(layers.MaxPooling2D((2,2)))
     model.add(layers.SeparableConv2D(64, (3,3), activation='relu'))
     model.add(layers.SeparableConv2D(128, (3,3), activation='relu'))
-    model.add(layers.GlobalAveragePooling1D())
+    model.add(layers.GlobalAveragePooling2D())
     model.add(layers.Dense(32, activation='relu'))
     model.add(layers.Dense(10, activation='softmax'))
     return model

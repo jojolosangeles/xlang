@@ -1,5 +1,5 @@
-from xlate.xperiment import Xperiment
-from xlate import xlate
+from lang.xperiment import Xperiment
+from lang import xlate
 import sys
 
 fileName = sys.argv[1]

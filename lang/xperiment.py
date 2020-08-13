@@ -1,4 +1,5 @@
-from xlate import xlate
+from lang import xlate
+from lang.dimension import implicit_dimension, reset_default_dimension
 
 
 class Xlayer:
@@ -42,7 +43,7 @@ class LayerMemory:
         if attr_start_index != None:
             attr_values = self.attr_memory(layer_type, tokens, list(range(attr_start_index, len(tokens))))
         if is_dimensional:
-            class_name = f"{class_name}{xlate.implicit_dimension(param_values)}D"
+            class_name = f"{class_name}{implicit_dimension(param_values)}D"
         if custom_attrs:
             attr_values.append(custom_attrs)
         return class_name, param_values, attr_values
@@ -104,7 +105,7 @@ def as_output_layer_params(output_spec):
     class_name, is_dimensional, param_value_offsets, attr_values_start_offset, fixed_attrs = layer_config[layer_type]
     if fixed_attrs:
         attrs.extend(fixed_attrs)
-    return xlate.as_layer_class(class_name, is_dimensional, xlate.implicit_dimension(param_values)), param_values, attrs
+    return xlate.as_layer_class(class_name, is_dimensional, implicit_dimension(param_values)), param_values, attrs
 
 
 class Xperiment:
@@ -112,7 +113,7 @@ class Xperiment:
         self.model_name = model_name
         self.input_spec = input_spec
         self.output_spec = output_spec
-        xlate.reset_dimensions()
+        reset_default_dimension()
         self.input_shape = xlate.as_kwparam('input_shape', xlate.as_shape(input_spec))
         self.output_layer = Xlayer(*as_output_layer_params(output_spec))
         self.lines = []

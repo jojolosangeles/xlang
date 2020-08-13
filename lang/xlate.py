@@ -1,50 +1,98 @@
+"""
+There are two types of parameters, corresponding to args and kwargs
 
-#
-#  dimension(d) => dim=1
-#    if not d[0].isalpha():
-#      dim = max(dim, len(d.split('x')))
-#
-def dimension(d):
-    dim = 1
-    if not d[0].isalpha():
-        dim = max(dim, len(d.split('x')))
-    return dim
+When an 'arg' value is provided, it may be transformed.
 
+Any numbers separated by 'x' become a shape-tuple string.  '3x3' becomes '(3,3)'
 
-#
-#  implicit_dimension(param_values) => dim=1
-#    for p in param_values:
-#      dim = max(dim, dimension(p))
-#
-last_explicit_dimension = 1
+An number ending in 'k' or 'm' adds 3 or 6 zeros to the end of the number.  '3k' becomes '3000', '3m' becomes '3000000'
 
+Any string value is quoted.
 
-def reset_dimensions():
-    global last_explicit_dimension
-    last_explicit_dimension = 1
+>>> maybe_quote("3")
+'3'
+>>> maybe_quote("relu")
+"'relu'"
+>>> maybe_quote("fn(3)")
+'fn(3)'
+>>> maybe_quote("True")
+'True'
+>>> maybe_quote("False")
+'False'
+>>> maybe_quote("true")
+"'true'"
+>>> maybe_quote("false")
+"'false'"
+>>> maybe_quote("")
+''
 
+Strings that represent numbers need to be converted to their full number strings.
 
-def implicit_dimension(param_values):
-    global last_explicit_dimension
-    dim = 1
-    for p in param_values:
-        dim = max(dim, dimension(p))
-    if dim > 1:
-        last_explicit_dimension = dim
-    if len(param_values) == 0:
-        dim = last_explicit_dimension
-    return dim
+>>> as_number("3")
+3
+>>> as_number("10k")
+10000
+>>> as_number("3m")
+3000000
+>>> as_number("haha")
+0
+>>> as_number("")
+0
+
+>>> as_number_str("3")
+'3'
+>>> as_number_str("10k")
+'10000'
+>>> as_number_str("3m")
+'3000000'
+>>> as_number_str("haha")
+'haha'
+>>> as_number_str("")
+''
+
+"""
+from lang.dimension import dimension
 
 
 #
 #  maybe_quote(val) => val
-#    if val[0].isalpha():
+#    if len(val) > 0 and val[0].isalpha() and not '(' in val and val != "True" and val != "False":
 #      val = f"'{val}'"
 #
 def maybe_quote(val):
-    if val[0].isalpha() and not '(' in val and val != "True" and val != "False":
+    # if the value could be a word, could not be a function or bool val, add quotes
+    if len(val) > 0 and val[0].isalpha() and not '(' in val and val != "True" and val != "False":
         val = f"'{val}'"
     return val
+
+
+#
+#  as_number_str(s) => s
+#    if len(s) and s[-1] in conv_dict:
+#      return f"{s[:-1]}{conv_dict[s[-1]]}"
+#    else:
+#      return s
+#
+conv_dict = {"m": "000000", "k": "000"}
+
+
+def as_number(s):
+    if len(s) == 0:
+        return 0
+    if s.isnumeric():
+        return int(s)
+    elif s[:-1].isnumeric and s[-1] in conv_dict:
+        return int(f"{s[:-1]}{conv_dict[s[-1]]}")
+    else:
+        return 0
+
+
+def as_number_str(s):
+    n = as_number(s)
+    if n > 0:
+        return f"{n}"
+    else:
+        return s
 
 
 #
@@ -76,7 +124,7 @@ def as_kwparam(name, val):
 
 
 # Map layer type-s into class names
-dimensional_layers = [ "conv", "maxpool" ]
+dimensional_layers = ["conv", "maxpool"]
 
 
 #
@@ -91,22 +139,6 @@ def as_layer_class(class_name, is_dimensional, dimensionality, tokens=[]):
     if class_name.startswith("Token_"):
         class_name = tokens[int(class_name[6:])]
     return class_name
-
-
-#
-#  as_number(s) => n=0
-#    if s.endswith("k"):
-#      n = int(s[:-1])*1000
-#    elif s.isnumeric():
-#      n = int(s)
-#
-def as_number(s):
-    n = 0
-    if s.endswith("k"):
-        n = int(s[:-1] ) *1000
-    elif s.isnumeric():
-        n = int(s)
-    return n
 
 
 #
@@ -154,14 +186,10 @@ class_selectors = {
     "float": ("dense", ["1"], [])
 }
 
-
-
-
-
 attr_values = {
-    "activation": { "relu", "selu", "sigmoid", "softmax" },
-    "kernel_regularizer": { "l1", "l2" },
-    "weights": { "imagenet" }
+    "activation": {"relu", "selu", "sigmoid", "softmax"},
+    "kernel_regularizer": {"l1", "l2"},
+    "weights": {"imagenet"}
 }
 
 
@@ -184,9 +212,9 @@ def attr_val(val, possible_params):
 #      yield attr_name[attr],attr
 #
 def as_kwparam_list(attrs):
-    for i,attr in enumerate(attrs):
+    for i, attr in enumerate(attrs):
         name = attr_name(attr)
-        val = attr_val(attr, attrs[(i+1):])
+        val = attr_val(attr, attrs[(i + 1):])
         if name:
             yield name, val
         elif '=' in attr:
