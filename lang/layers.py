@@ -1,5 +1,4 @@
 from lang.dimension import dimension
-from lang.args import as_number
 
 
 #
@@ -53,6 +52,13 @@ def token_val(t, tokens):
     if t.startswith("Token_"):
         t = tokens[int(t[6:])]
     return t
+
+
+class_selectors = {
+    "probability": ("dense", ["1"], ["sigmoid"]),
+    "probabilities": ("dense", ["Token_0"], ["softmax"]),
+    "float": ("dense", ["1"], [])
+}
 
 
 

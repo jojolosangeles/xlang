@@ -1,3 +1,5 @@
+from lang import args
+from lang import layers
 from lang import xlate
 from lang.dimension import implicit_dimension, reset_default_dimension
 
@@ -97,10 +99,10 @@ def as_output_layer_params(output_spec):
     layer_type, param_values, attrs = None, None, None
     tokens = output_spec.split()
     for t in tokens:
-        if t in xlate.class_selectors:
-            layer_type, params, attrs = xlate.class_selectors[t]
+        if t in layers.class_selectors:
+            layer_type, params, attrs = layers.class_selectors[t]
             param_values = [xlate.token_val(t, tokens) for t in params]
-            attrs = [xlate.as_kwparam(name, val) for name, val in xlate.as_kwparam_list(attrs)]
+            attrs = [args.as_kwarg_str(name, val) for name, val in args.as_kwarg_list(attrs)]
 
     class_name, is_dimensional, param_value_offsets, attr_values_start_offset, fixed_attrs = layer_config[layer_type]
     if fixed_attrs:
@@ -114,7 +116,7 @@ class Xperiment:
         self.input_spec = input_spec
         self.output_spec = output_spec
         reset_default_dimension()
-        self.input_shape = xlate.as_kwparam('input_shape', xlate.as_shape(input_spec))
+        self.input_shape = args.as_kwarg_str('input_shape', xlate.as_shape(input_spec))
         self.output_layer = Xlayer(*as_output_layer_params(output_spec))
         self.lines = []
         self.layers = []
@@ -123,8 +125,8 @@ class Xperiment:
     def add_layer(self, class_name, param_values, attrs):
         xlayer = Xlayer(
             class_name,
-            xlate.params_as_code(param_values),
-            [xlate.as_kwparam(name, val) for name, val in xlate.as_kwparam_list(attrs)]
+            args.args_as_list(param_values),
+            [args.as_kwarg_str(name, val) for name, val in args.as_kwarg_list(attrs)]
         )
         self.layers.append(xlayer)
         return xlayer

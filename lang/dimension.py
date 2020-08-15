@@ -60,8 +60,13 @@ def reset_default_dimension():
 
 #
 #  implicit_dimension(param_values) => dim=1
+#    global last_explicit_dimension
 #    for p in param_values:
 #      dim = max(dim, dimension(p))
+#    if dim > 1:
+#      last_explicit_dimension = dim
+#    if len(param_values) == 0:
+#      dim = last_explicit_dimension
 #
 def implicit_dimension(param_values):
     global last_explicit_dimension

@@ -1,4 +1,5 @@
 set -x
 mkdir -p generated
-python regen.py ddlp.py > generated/ddlp.py
-diff ddlp.py generated/ddlp.py
+rm generated/ddlp.py
+python create_model.py ddlp.models.x > generated/ddlp.py
+diff expected/ddlp.py generated/ddlp.py

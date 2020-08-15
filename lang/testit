@@ -1,2 +1,3 @@
 python -m doctest -v dimension.py | grep failed
+python -m doctest -v args.py | grep failed
 python -m doctest -v xlate.py | grep failed
