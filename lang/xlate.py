@@ -44,6 +44,15 @@ def as_shape(input_spec):
     return shape_str
 
 
+def as_num_words(input_spec):
+    data = input_spec.split()
+    result = 0
+    for d in data:
+        n = as_number(d)
+        if n > result:
+            result = n
+    return result
+
 #
 #  token_val(t, tokens) => t
 #    if t.startswith("Token_"):

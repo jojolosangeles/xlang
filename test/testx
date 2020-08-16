@@ -1,4 +1,5 @@
 set -x
 mkdir -p generated
-python regen.py x.py > generated/x.py
-diff x.py generated/x.py
+rm generated/*
+python create_model.py models/reuters.x > generated/reuters.py
+diff expected/reuters.py generated

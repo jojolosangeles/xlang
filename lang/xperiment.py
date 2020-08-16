@@ -110,15 +110,50 @@ def as_output_layer_params(output_spec):
     return xlate.as_layer_class(class_name, is_dimensional, implicit_dimension(param_values)), param_values, attrs
 
 
-class Xperiment:
-    def __init__(self, model_name, input_spec, output_spec):
-        self.model_name = model_name
+class Lines:
+    def __init__(self):
+        self.lines = []
+
+    def print_lines_as_comment(self):
+        print("")
+        print("")
+        print("#")
+        for line in self.lines:
+            print(f"# {line}")
+        print("#")
+
+
+class ModelArchitecture(Lines):
+    def __init__(self, input_spec, output_spec):
+        # track lines specifying architecture
+        Lines.__init__(self)
+
+        # the input and output data specifications for this architecture
         self.input_spec = input_spec
         self.output_spec = output_spec
+
+        # TODO: looks wrong, dimension handling needs simplification
         reset_default_dimension()
+
+        # the input_spec is converted to the input_shape needed by the model
+        # the output_spec is converted to the output_layer of the model
         self.input_shape = args.as_kwarg_str('input_shape', xlate.as_shape(input_spec))
+        self.num_words = xlate.as_num_words(input_spec)
         self.output_layer = Xlayer(*as_output_layer_params(output_spec))
-        self.lines = []
+
+        # the layers in this architecture, the layer_memory allows layer specifications to
+        # repeat values passed to previous layers without being explicit.  For example,
+        #
+        # - dense 32 relu
+        # - dense 64 relu
+        # - dense 64 relu
+        #
+        # can be represented as:
+        #
+        # - dense 32 relu
+        # - dense 64
+        # - dense
+        #
         self.layers = []
         self.layer_memory = LayerMemory()
 
@@ -131,10 +166,25 @@ class Xperiment:
         self.layers.append(xlayer)
         return xlayer
 
+    def process_layer_line(self, line, layer_type_replacements):
+        line = line[2:]
+        data = line.split()
+        layer_type = data[0]
+        if layer_type in layer_type_replacements:
+            layer_type = layer_type_replacements[layer_type]
+        class_name, params, attrs = self.layer_memory.get_params(layer_type, data)
+        layer = self.add_layer(xlate.token_val(class_name, data), params, attrs)
+        if layer_type == "bidirectional":
+            data = data[1:]
+            layer_type = data[0]
+            class_name, params, attrs = self.layer_memory.get_params(layer_type, data)
+            param_str = ", ".join(args.args_as_list(params))
+            layer.params.append(f"{class_name}({param_str})")
+
     def prepare_to_code(self):
         # stacked GRU layers require return_sequences=True
-        for i,layer in enumerate(self.layers[:-1]):
-            if "GRU" in layer.class_name and "GRU" in self.layers[i+1].class_name:
+        for i, layer in enumerate(self.layers[:-1]):
+            if "GRU" in layer.class_name and "GRU" in self.layers[i + 1].class_name:
                 layer.kwparams.append('return_sequences=True')
 
         # embedding puts shape as first parameter
@@ -153,3 +203,47 @@ class Xperiment:
             return "n_features"
         else:
             return ""
+
+
+class LoadData(Lines):
+    def __init__(self):
+        # track lines specifying data loading
+        Lines.__init__(self)
+        self.dataset_name = None
+        self.validation_size = None
+
+    def process_loader_line(self, line):
+        data = line.split()
+        if len(data) == 2 and data[0] == "load":
+            self.dataset_name = data[1]
+        if len(data) == 4 and data[0] == "-" and data[1] == "validate" and data[2] == "with":
+            self.validation_size = data[3]
+
+
+class Xperiment:
+    """
+    An experiment has several sections:
+
+      Loading Data
+      Preparing Data
+      Model Architecture
+      Training the Model
+      Evaluating the Model
+
+    Each section has it's own configuration lines, and section-specific data needed to generate the code.
+    """
+    def __init__(self, model_name, input_spec, output_spec):
+        self.load_data = LoadData()
+        self.preparing_data = None
+        self.model_architecture = ModelArchitecture(input_spec, output_spec)
+        self.train_model = None
+        self.evaluate_model = None
+
+        self.model_name = model_name
+
+        # data source for this experiment
+        self.dataset_name = None
+        self.loader_lines = []
+
+
+
