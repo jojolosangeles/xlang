@@ -1,7 +1,9 @@
-def plotit(hist_dict, keys):
+def show_hist(epochs, keys, hist_dict):
     plt.clf()
+    plt.figure(figsize=(11,8))
     rows = len(keys)
     cols = 2
+    epochs = range(1, epochs+1)
     for i,key in enumerate(keys):
         plt.subplot(rows, cols, i+1)
         training_value = hist_dict[key]
@@ -12,6 +14,13 @@ def plotit(hist_dict, keys):
         plt.ylabel(key)
         plt.legend()
     plt.show()
+
+def vectorize_sequences(sequences, dimension=10000):
+    n_sequences = len(sequences)
+    results = np.zeros((n_sequences, dimension))
+    for i, sequence in enumerate(sequences):
+        results[i, sequence] = 1
+    return results
 
 
 from keras.datasets import imdb

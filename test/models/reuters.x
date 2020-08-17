@@ -4,4 +4,7 @@ text 10k => reuters_test_1 => 46 probabilities
 
 load reuters
 - validate with 1000
-- train rmsprop accuracy with 10 epochs batch 512
+
+train rmsprop accuracy
+- 10 epochs, show loss accuracy
+- batch 512

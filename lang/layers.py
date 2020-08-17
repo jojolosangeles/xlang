@@ -55,9 +55,10 @@ def token_val(t, tokens):
 
 
 class_selectors = {
-    "probability": ("dense", ["1"], ["sigmoid"]),
-    "probabilities": ("dense", ["Token_0"], ["softmax"]),
-    "float": ("dense", ["1"], [])
+    # value is: layer_type, params, activation, loss
+    "probability": ("dense", ["1"], ["sigmoid"], 'binary_crossentropy'),
+    "probabilities": ("dense", ["Token_0"], ["softmax"], 'categorical_crossentropy'),
+    "float": ("dense", ["1"], [], None)
 }
 
 

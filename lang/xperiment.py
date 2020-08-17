@@ -1,7 +1,7 @@
 from lang import args
-from lang import layers
 from lang import xlate
 from lang.dimension import implicit_dimension, reset_default_dimension
+from lang.output_spec import OutputSpec
 
 
 class Xlayer:
@@ -66,48 +66,7 @@ class LayerMemory:
         return specified_values
 
 
-#
-#  Xperiment(model_name, input, output)
-#    input_shape = as_kwparam('input_shape', as_shape(input))
-#    output_layer = as_output_layer(output)
-#    layers = []
-#
-#    add_layer(layer_type, param_values, attrs)
-#      layers.add(make_layer(
-#        as_layer_class(layer_type, implicit_dimension(param_values)),
-#        [ as_param(val) for val in param_values ],
-#        [ as_kwparam(name, val) for name, val in as_kwparam_list(attrs) ]
-#      ))
-#
-#    prepare_to_code()
-#      layers[0].kwparams.add(input_shape)
-#      layers.add(output_layer)
-#
-#    model_builder_params() => s=""
-#      if input == "features":
-#        s = n_features
-#
-#
-#  as_output_layer_params(output_spec) => class_name,param_values,attrs
-#    tokens = output_spec.split()
-#    for t in tokens:
-#      if t in class_selectors:
-#        layer_type, params, attrs = class_selectors[t]
-#        param_values = [ token_val(t, tokens) for t in tokens ]
-#
-def as_output_layer_params(output_spec):
-    layer_type, param_values, attrs = None, None, None
-    tokens = output_spec.split()
-    for t in tokens:
-        if t in layers.class_selectors:
-            layer_type, params, attrs = layers.class_selectors[t]
-            param_values = [xlate.token_val(t, tokens) for t in params]
-            attrs = [args.as_kwarg_str(name, val) for name, val in args.as_kwarg_list(attrs)]
 
-    class_name, is_dimensional, param_value_offsets, attr_values_start_offset, fixed_attrs = layer_config[layer_type]
-    if fixed_attrs:
-        attrs.extend(fixed_attrs)
-    return xlate.as_layer_class(class_name, is_dimensional, implicit_dimension(param_values)), param_values, attrs
 
 
 class Lines:
@@ -139,7 +98,7 @@ class ModelArchitecture(Lines):
         # the output_spec is converted to the output_layer of the model
         self.input_shape = args.as_kwarg_str('input_shape', xlate.as_shape(input_spec))
         self.num_words = xlate.as_num_words(input_spec)
-        self.output_layer = Xlayer(*as_output_layer_params(output_spec))
+        self.output_layer = Xlayer(self.output_spec.layer_class_name, self.output_spec.param_values, self.output_spec.attrs)
 
         # the layers in this architecture, the layer_memory allows layer specifications to
         # repeat values passed to previous layers without being explicit.  For example,
@@ -211,6 +170,7 @@ class LoadData(Lines):
         Lines.__init__(self)
         self.dataset_name = None
         self.validation_size = None
+        self.max_sequence = None
 
     def process_loader_line(self, line):
         data = line.split()
@@ -220,12 +180,47 @@ class LoadData(Lines):
             self.validation_size = data[3]
 
 
+class TrainModel(Lines):
+    def __init__(self):
+        Lines.__init__(self)
+        self.optimizer = None
+        self.loss = None
+        self.metrics = []
+        self.epochs = 0
+        self.batch_size = 0
+        self.show_keys = []
+
+    def is_valid(self):
+        return self.optimizer is not None
+
+    def process_training_line(self, line):
+        data = line.split()
+        if data[0] == "train":
+            for x in data[1:]:
+                if self.optimizer is None:
+                    self.optimizer = x
+                else:
+                    self.metrics.append(x)
+        elif data[2].startswith("epochs"):
+            self.epochs = data[1]
+        elif data[1].startswith("batch"):
+            self.batch_size = data[2]
+        self.set_show_keys(data)
+
+    def set_show_keys(self, data):
+        show_found = False
+        for x in data:
+            if x == "show":
+                show_found = True
+            elif show_found:
+                self.show_keys.append(x)
+
+
 class Xperiment:
     """
-    An experiment has several sections:
+    An experiment has these sections:
 
       Loading Data
-      Preparing Data
       Model Architecture
       Training the Model
       Evaluating the Model
@@ -234,9 +229,9 @@ class Xperiment:
     """
     def __init__(self, model_name, input_spec, output_spec):
         self.load_data = LoadData()
-        self.preparing_data = None
-        self.model_architecture = ModelArchitecture(input_spec, output_spec)
-        self.train_model = None
+        self.output_spec = OutputSpec(output_spec, layer_config)
+        self.model_architecture = ModelArchitecture(input_spec, self.output_spec)
+        self.train_model = TrainModel()
         self.evaluate_model = None
 
         self.model_name = model_name
@@ -245,5 +240,7 @@ class Xperiment:
         self.dataset_name = None
         self.loader_lines = []
 
-
-
+    def prepare_to_code(self):
+        self.model_architecture.prepare_to_code()
+        self.train_model.loss = self.output_spec.loss_fn
+        self.load_data.max_sequence = self.model_architecture.num_words

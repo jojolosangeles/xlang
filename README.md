@@ -1,3 +1,33 @@
+## Xlang
+
+This is based on the book Deep Learning with Python, which has some very concise code for many different
+types of problems.  
+
+One thing I learned from this book is that once the incoming information needs to be designed in a way
+that the learning model can handle.  
+
+xlang extends that concept (sort of) with a minimalist description of the information needed to
+load/train/evaluate a keras model.  The minimalist description is processed into Python
+code.
+
+Here's the reuters example:
+
+Text file: reuters.x
+```yaml
+text 10k => reuters_test_1 => 46 probabilities
+- dense 64 relu
+- dense
+
+load reuters
+- validate with 1000
+
+train rmsprop accuracy
+- 10 epochs, show loss accuracy
+- batch 512
+```
+
+Code below generated from above text file: python create_model.py models/reuters.x
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 from keras import models
@@ -57,3 +87,4 @@ def reuters_test_1():
     model = model_reuters_test_1()
     hist = train_reuters_test_1(model, train_data, train_labels, val_data, val_labels)
     show_hist(epochs=10, keys=['loss', 'accuracy'], hist_dict=hist.history)
+```
