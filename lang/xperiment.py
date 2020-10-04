@@ -7,28 +7,41 @@ from lang.output_spec import OutputSpec
 class Xlayer:
     def __init__(self, class_name, params, kwparams):
         self.class_name = class_name
-        self.params = params
+        self.params = params if params else []
         self.kwparams = kwparams
+        print(self)
 
+    def __repr__(self):
+        return f"XLayer({self.class_name}, {len(self.params)} params, {len(self.kwparams)} kwparaams)"
 
 layer_config = {
-    # layer_type: ( class_name, is_dimensional param_value_offsets, attr_values_start_offset, fixed_params )
-    "bidirectional": ("layers.Bidirectional", False, [], 1, None),
-    "conv": ("layers.Conv", True, [1, 2], 3, None),
-    "convbase": ("Token_1", False, [], 2, "include_top=False"),
-    "dense": ("layers.Dense", False, [1], 2, None),
-    "embed": ("layers.Embedding", False, [1], 2, None),
-    "dropout": ("layers.Dropout", False, [1], None, None),
-    "flatten": ("layers.Flatten", False, [], None, None),
-    "global": ("layers.GlobalMaxPooling", True, [], None, None),
-    "global_average_pool": ("layers.GlobalAveragePooling", True, [], None, None),
-    "GRU": ("layers.GRU", False, [1], 2, None),
-    "LSTM": ("layers.LSTM", False, [1], None, None),
-    "maxpool": ("layers.MaxPooling", True, [1], None, None),
-    "separableconv": ("layers.SeparableConv", True, [1, 2], 3, None),
-    "simpleRNN": ("layers.SimpleRNN", False, [1], None, None)
+    # layer_type: ( class_name,
+    #               expects_flattened_input,
+    #               is_dimensional,
+    #               param_value_offsets,
+    #               attr_values_start_offset,
+    #               fixed_params )
+    "bidirectional": ("layers.Bidirectional", False, False, [], 1, None),
+    "conv": ("layers.Conv", False, True, [1, 2], 3, None),
+    "convbase": ("Token_1", False, False, [], 2, "include_top=False"),
+    "dense": ("layers.Dense", True, False, [1], 2, None),
+    "embed": ("layers.Embedding", False, False, [1], 2, None),
+    "dropout": ("layers.Dropout", False, False, [1], None, None),
+    "flatten": ("layers.Flatten", False, False, [], None, None),
+    "global": ("layers.GlobalMaxPooling", False, True, [], None, None),
+    "global_average_pool": ("layers.GlobalAveragePooling", False, True, [], None, None),
+    "GRU": ("layers.GRU", False, False, [1], 2, None),
+    "LSTM": ("layers.LSTM", False, False, [1], None, None),
+    "maxpool": ("layers.MaxPooling", False, True, [1], None, None),
+    "separableconv": ("layers.SeparableConv", False, True, [1, 2], 3, None),
+    "simpleRNN": ("layers.SimpleRNN", False, False, [1], None, None)
 }
 
+def layer_class_name(layer_type):
+    return layer_config[layer_type][0]
+
+def expects_flattened_input(layer_type):
+    return layer_config[layer_type][1]
 
 class LayerMemory:
     def __init__(self):
@@ -39,7 +52,7 @@ class LayerMemory:
             self.remembered_attr_values[layer_type] = []
 
     def get_params(self, layer_type, tokens):
-        class_name, is_dimensional, param_indices, attr_start_index, custom_attrs = layer_config[layer_type]
+        class_name, _, is_dimensional, param_indices, attr_start_index, custom_attrs = layer_config[layer_type]
         param_values = self.param_memory(layer_type, tokens, param_indices)
         attr_values = []
         if attr_start_index != None:
@@ -116,7 +129,7 @@ class ModelArchitecture(Lines):
         self.layers = []
         self.layer_memory = LayerMemory()
 
-    def add_layer(self, class_name, param_values, attrs):
+    def add_layer(self, class_name, param_values=None, attrs={}):
         xlayer = Xlayer(
             class_name,
             args.args_as_list(param_values),
@@ -132,6 +145,8 @@ class ModelArchitecture(Lines):
         if layer_type in layer_type_replacements:
             layer_type = layer_type_replacements[layer_type]
         class_name, params, attrs = self.layer_memory.get_params(layer_type, data)
+        if not self.layers and expects_flattened_input(layer_type):
+            self.add_layer(layer_class_name("flatten"))
         layer = self.add_layer(xlate.token_val(class_name, data), params, attrs)
         if layer_type == "bidirectional":
             data = data[1:]

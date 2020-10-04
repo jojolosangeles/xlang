@@ -1,4 +1,5 @@
 from lang.xperiment import Xperiment
+from lang.hello_world_loaders import is_hello, hello_mnist
 import sys
 
 fileName = sys.argv[1]
@@ -72,20 +73,34 @@ class Xbuilder:
         print("from keras import layers")
         print("from keras import regularizers")
         print("from keras.applications import VGG16")
+        print("from keras.datasets import mnist")
 
     @staticmethod
     def gen_load_code(xperiment):
         x = xperiment
+        if x.load_data.dataset_name is None:
+            x.load_data.dataset_name = "mnist"
+            x.inspect_spec = None
+
         if x.load_data.dataset_name is not None:
             print(f"from keras.datasets import {x.load_data.dataset_name}")
             print(f"from keras.utils.np_utils import to_categorical")
             x.load_data.print_lines_as_comment()
-            print(f"def data_{x.model_name}():")
-            print(f"    (train_data, train_labels), (test_data, test_labels) = {x.load_data.dataset_name}.load_data(num_words={x.model_architecture.num_words})")
-            print(f"    train_data = vectorize_sequences(train_data, {x.load_data.max_sequence})")
-            print(f"    test_data = vectorize_sequences(test_data, {x.load_data.max_sequence})")
-            print(f"    train_labels = to_categorical(train_labels)")
-            print(f"    test_labels = to_categorical(test_labels)")
+            print(f"def load_{x.model_name}():")
+            if is_hello(x.load_data.dataset_name):
+                print(f"    return hello_{x.load_data.dataset_name}()")
+                return
+            load_data_params = ""
+            if x.model_architecture.num_words is not None:
+                load_data_params = f"num_words={x.model_architecture.num_words}"
+            print(f"    (train_data, train_labels), (test_data, test_labels) = {x.load_data.dataset_name}.load_data({load_data_params})")
+            if x.inspect_spec == "features":
+                pass
+            else:
+                print(f"    train_data = vectorize_sequences(train_data, {x.load_data.max_sequence})")
+                print(f"    test_data = vectorize_sequences(test_data, {x.load_data.max_sequence})")
+                print(f"    train_labels = to_categorical(train_labels)")
+                print(f"    test_labels = to_categorical(test_labels)")
             if x.load_data.validation_size is not None:
                 print(f"    val_data = train_data[:{x.load_data.validation_size}]")
                 print(f"    val_labels = train_labels[:{x.load_data.validation_size}]")
@@ -126,10 +141,10 @@ class Xbuilder:
         print("# Example using generated methods")
         print("#")
         print(f"def {x.model_name}():")
-        print(f"    (train_data, train_labels), (val_data, val_labels), (test_data, test_labels) = data_{x.model_name}()")
+        print(f"    (train_data, train_labels), (val_data, val_labels), (test_data, test_labels) = load_{x.model_name}()")
         print(f"    model = model_{x.model_name}()")
         print(f"    hist = train_{x.model_name}(model, train_data, train_labels, val_data, val_labels)")
-        print(f"    show_hist(epochs={x.train_model.epochs}, keys={str(x.train_model.show_keys)}, hist_dict=hist.history)")
+        print(f"    return hist.history, model.evaluate(test_data, test_labels, return_dict=True)")
 
     def gen_model(self):
         self.imports()
@@ -141,17 +156,19 @@ class Xbuilder:
             self.gen_example(x)
 
 
-
 lines = open(fileName, "r").readlines()
 python_file = fileName.endswith(".py")
 builder = Xbuilder()
 for line in lines:
     line = line.strip()
+    print(line)
     if python_file:
         if len(line) > 2:
             line = line[2:]
     builder.process_line(line)
+
 builder.gen_model()
+
 
 
 

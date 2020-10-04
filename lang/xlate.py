@@ -51,15 +51,15 @@ def as_num_words(input_spec):
         n = as_number(d)
         if n > result:
             result = n
-    return result
+    return None if result == 0 else result
 
 #
 #  token_val(t, tokens) => t
 #    if t.startswith("Token_"):
 #      t = tokens[ int(t[6:]) ]
 #
-def token_val(t, tokens):
-    if t.startswith("Token_"):
+def token_val(t, tokens=None):
+    if tokens and t.startswith("Token_"):
         t = tokens[int(t[6:])]
     return t
 

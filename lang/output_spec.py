@@ -18,7 +18,7 @@ class OutputSpec:
                 param_values = [xlate.token_val(t, tokens) for t in params]
                 attrs = [args.as_kwarg_str(name, val) for name, val in args.as_kwarg_list(attrs)]
 
-        class_name, is_dimensional, param_value_offsets, attr_values_start_offset, fixed_attrs = layer_config[layer_type]
+        class_name, _, is_dimensional, param_value_offsets, attr_values_start_offset, fixed_attrs = layer_config[layer_type]
         if fixed_attrs:
             attrs.extend(fixed_attrs)
         return xlate.as_layer_class(class_name, is_dimensional, implicit_dimension(param_values)), param_values, attrs, loss_fn

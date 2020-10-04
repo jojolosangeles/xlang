@@ -123,7 +123,7 @@ def as_arg_str(p):
 
 
 def args_as_list(param_values):
-    return [as_arg_str(val) for val in param_values]
+    return [as_arg_str(val) for val in param_values] if param_values else []
 
 
 #
