@@ -37,11 +37,14 @@ layer_config = {
     "simpleRNN": ("layers.SimpleRNN", False, False, [1], None, None)
 }
 
+
 def layer_class_name(layer_type):
     return layer_config[layer_type][0]
 
+
 def expects_flattened_input(layer_type):
     return layer_config[layer_type][1]
+
 
 class LayerMemory:
     def __init__(self):
@@ -198,8 +201,8 @@ class LoadData(Lines):
 class TrainModel(Lines):
     def __init__(self):
         Lines.__init__(self)
-        self.optimizer = None
-        self.loss = None
+        self.optimizer = "sgd"
+        self.loss = "binary_crossentropy"
         self.metrics = []
         self.epochs = 0
         self.batch_size = 0
