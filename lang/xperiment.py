@@ -14,6 +14,7 @@ class Xlayer:
     def __repr__(self):
         return f"XLayer({self.class_name}, {len(self.params)} params, {len(self.kwparams)} kwparaams)"
 
+
 layer_config = {
     # layer_type: ( class_name,
     #               expects_flattened_input,
@@ -82,9 +83,6 @@ class LayerMemory:
         return specified_values
 
 
-
-
-
 class Lines:
     def __init__(self):
         self.lines = []
@@ -114,7 +112,8 @@ class ModelArchitecture(Lines):
         # the output_spec is converted to the output_layer of the model
         self.input_shape = args.as_kwarg_str('input_shape', xlate.as_shape(input_spec))
         self.num_words = xlate.as_num_words(input_spec)
-        self.output_layer = Xlayer(self.output_spec.layer_class_name, self.output_spec.param_values, self.output_spec.attrs)
+        self.output_layer = Xlayer(self.output_spec.layer_class_name, self.output_spec.param_values,
+                                   self.output_spec.attrs)
 
         # the layers in this architecture, the layer_memory allows layer specifications to
         # repeat values passed to previous layers without being explicit.  For example,
@@ -203,8 +202,8 @@ class TrainModel(Lines):
         Lines.__init__(self)
         self.optimizer = "sgd"
         self.loss = "binary_crossentropy"
-        self.metrics = []
-        self.epochs = 0
+        self.metrics = ['accuracy']
+        self.epochs = 10
         self.batch_size = 0
         self.show_keys = []
 
@@ -245,6 +244,7 @@ class Xperiment:
 
     Each section has it's own configuration lines, and section-specific data needed to generate the code.
     """
+
     def __init__(self, model_name, input_spec, output_spec):
         self.load_data = LoadData()
         self.output_spec = OutputSpec(output_spec, layer_config)

@@ -12,6 +12,13 @@ class Xbuilder:
         self.layer_type_replacements = {}
         self.context = None
 
+    def process_lines(self, lines, only_py_comments=False):
+        for line in lines:
+            if only_py_comments:
+                if len(line) > 2:
+                    line = line[2:]
+            self.process_line(line.strip())
+
     def process_line(self, line):
         is_header, is_layer, is_with, is_loader_line, is_train_model_line = self.parse(line)
 
@@ -69,11 +76,13 @@ class Xbuilder:
     def imports():
         print("import numpy as np")
         print("import matplotlib.pyplot as plt")
+        print("import tensorflow as tf")
         print("from keras import models")
         print("from keras import layers")
         print("from keras import regularizers")
         print("from keras.applications import VGG16")
         print("from keras.datasets import mnist")
+        print("from lang.hello_world_loaders import *")
 
     @staticmethod
     def gen_load_code(xperiment):
@@ -156,16 +165,9 @@ class Xbuilder:
             self.gen_example(x)
 
 
-lines = open(fileName, "r").readlines()
-python_file = fileName.endswith(".py")
 builder = Xbuilder()
-for line in lines:
-    line = line.strip()
-    print(line)
-    if python_file:
-        if len(line) > 2:
-            line = line[2:]
-    builder.process_line(line)
+
+builder.process_lines(open(fileName, "r").readlines(), fileName.endswith(".py"))
 
 builder.gen_model()
 

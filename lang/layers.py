@@ -1,3 +1,4 @@
+import collections
 from lang.dimension import dimension
 
 
@@ -54,12 +55,15 @@ def token_val(t, tokens):
     return t
 
 
-class_selectors = {
-    # value is: layer_type, params, activation, loss
-    "probability": ("dense", ["1"], ["sigmoid"], 'binary_crossentropy'),
-    "probabilities": ("dense", ["Token_0"], ["softmax"], 'categorical_crossentropy'),
-    "float": ("dense", ["1"], [], None)
+LayerControls = collections.namedtuple('LayerControls', 'layer_type params activation_fn loss_fn')
+layer_controls = {
+    "probability": LayerControls(layer_type="dense", params=["1"], activation_fn=["sigmoid"], loss_fn="binary_crossentropy"),
+    "probabilities": LayerControls(layer_type="dense", params=["Token_0"], activation_fn=["softmax"], loss_fn="categorical_crossentropy"),
+    "float": LayerControls(layer_type="dense", params=["1"], activation_fn=[], loss_fn=None)
+
 }
+
+
 
 
 
