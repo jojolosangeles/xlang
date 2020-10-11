@@ -97,7 +97,7 @@ class Xbuilder:
             x.load_data.print_lines_as_comment()
             print(f"def load_{x.model_name}():")
             if is_hello(x.load_data.dataset_name):
-                print(f"    return hello_{x.load_data.dataset_name}()")
+                print(f"    return hello_{x.load_data.dataset_name}(as_onehot={not x.model_architecture.one_value_output})")
                 return
             load_data_params = ""
             if x.model_architecture.num_words is not None:

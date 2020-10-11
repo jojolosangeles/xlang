@@ -115,6 +115,12 @@ class ModelArchitecture(Lines):
         self.output_layer = Xlayer(self.output_spec.layer_class_name, self.output_spec.param_values,
                                    self.output_spec.attrs)
 
+        # what type of output
+        self.one_value_output = "activation='sigmoid'" in self.output_spec.attrs
+
+        print(f"OUTPUT_SPEC: {self.output_spec}")
+        print(f"..self.one_value_output={self.one_value_output}")
+
         # the layers in this architecture, the layer_memory allows layer specifications to
         # repeat values passed to previous layers without being explicit.  For example,
         #
