@@ -2,3 +2,9 @@ set -x
 PYTHONPATH=/Users/johannesjohannsen/PycharmProjects/xlang python create_model.py 1.x > model1.py
 echo ""
 cat model1.py
+echo ""
+echo ""
+PYTHONPATH=/Users/johannesjohannsen/PycharmProjects/xlang python create_model.py 1.x.A > model1A.py
+echo ""
+cat model1A.py
+echo ""

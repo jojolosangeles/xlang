@@ -1,5 +1,7 @@
-from keras.datasets import mnist, cifar10
+from keras.datasets import mnist, cifar10, imdb
+from sklearn.model_selection import train_test_split
 import tensorflow as tf
+import numpy as np
 
 
 def mnist_style_train(model, train_data, train_labels, val_data, val_labels):
@@ -20,6 +22,11 @@ def mnist_style_load(loadfn, as_onehot=True):
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
+#
+# RESULTS = (X_train, y_train), (X_val, y_val), (X_test, y_test)
+#
+
+
 def hello_mnist(as_onehot=True):
     return mnist_style_load(mnist.load_data, as_onehot)
 
@@ -28,9 +35,34 @@ def hello_cifar(as_onehot=True):
     return mnist_style_load(cifar10.load_data, as_onehot)
 
 
+def vectorize_sequences(sequences, dimension=10000):
+    results = np.zeros((len(sequences), dimension))
+    for i, sequence in enumerate(sequences):
+        results[i, sequence] = 1
+    return results
+
+
+def hello_imdb(num_words=10000, vectorized=True):
+    (train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=num_words)
+    train_data, val_data, train_labels, val_labels = train_test_split(train_data, train_labels, test_size=0.2)
+    if vectorized:
+        train_data = vectorize_sequences(train_data, dimension=num_words)
+        train_labels = np.asarray(train_labels).astype('float32')
+        val_data = vectorize_sequences(val_data, dimension=num_words)
+        val_labels = np.asarray(val_labels).astype('float32')
+        test_data = vectorize_sequences(test_data, dimension=num_words)
+        test_labels = np.asarray(test_labels).astype('float32')
+    return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
+
+
+#
+# Loaders supported
+#
+
 hello_dict = {
     "mnist": hello_mnist,
-    "cifar": hello_cifar
+    "cifar": hello_cifar,
+    "imdb": hello_imdb
 }
 
 

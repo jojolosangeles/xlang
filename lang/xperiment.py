@@ -195,6 +195,17 @@ class LoadData(Lines):
         self.validation_size = None
         self.max_sequence = None
 
+    def params(self, model_architecture):
+        if self.dataset_name == "mnist":
+            return f"as_onehot = {not model_architecture.one_value_output}"
+        elif self.dataset_name == "imdb":
+            return f"num_words=10000"
+
+    def set_dataset_name(self, model_name):
+        data = model_name.split("_")
+        if len(data) > 1:
+            self.dataset_name = data[0]
+
     def process_loader_line(self, line):
         data = line.split()
         if len(data) == 2 and data[0] == "load":
